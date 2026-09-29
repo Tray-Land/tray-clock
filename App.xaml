@@ -9,11 +9,33 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!--  Readable checked state for the header toggle buttons (the app has no other ToggleButtons).  -->
+            <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="ControlFillColorSecondaryBrush" />
+            <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ControlFillColorTertiaryBrush" />
+            <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="ControlFillColorDefaultBrush" />
+            <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="ControlStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrushCheckedPointerOver" ResourceKey="ControlStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrushCheckedPressed" ResourceKey="ControlStrokeColorDefaultBrush" />
+
             <!--  Compact, borderless icon button for the flyout header.  -->
             <Style
                 x:Key="FlyoutIconButtonStyle"
                 BasedOn="{StaticResource DefaultButtonStyle}"
                 TargetType="Button">
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+
+            <Style
+                x:Key="FlyoutIconToggleButtonStyle"
+                BasedOn="{StaticResource DefaultToggleButtonStyle}"
+                TargetType="ToggleButton">
                 <Setter Property="Width" Value="36" />
                 <Setter Property="Height" Value="32" />
                 <Setter Property="Padding" Value="0" />

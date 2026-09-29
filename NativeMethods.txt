@@ -10,6 +10,7 @@ GetDpiForMonitor
 GetDpiForWindow
 GetForegroundWindow
 GetWindowLong
+MessageBeep
 MonitorFromPoint
 NOTIFYICONIDENTIFIER
 RegNotifyChangeKeyValue

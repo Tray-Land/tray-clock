@@ -27,7 +27,6 @@ public partial class App : Application
     private RegisteredWaitHandle? _showWait;
     private TrayIcon? _trayIcon;
     private TrayFlyoutWindow? _flyout;
-    private SettingsWindow? _settings;
     private DispatcherQueue? _dispatcher;
     private bool _isExiting;
 
@@ -74,6 +73,14 @@ public partial class App : Application
 
         InitializeTrayIcon();
 
+        // A timer finishing while the flyout is hidden is the reason this app does background work.
+        ClockState.TimerFinished += item =>
+        {
+            SetTrayStatus($"{item.Label} finished");
+            Windows.Win32.PInvoke.MessageBeep(Windows.Win32.UI.WindowsAndMessaging.MESSAGEBOX_STYLE.MB_ICONASTERISK);
+            ShowFlyout();
+        };
+
         // First run: show where the app lives instead of launching into silence.
         if (!SettingsService.HasLaunchedBefore)
         {
@@ -102,24 +109,18 @@ public partial class App : Application
     {
         TrayFlyoutWindow flyout = EnsureFlyout();
         flyout.HidePopup();
+        flyout.ShowMainPage();
         flyout.ShowPopup();
     }
 
     public void ShowSettings()
     {
-        _flyout?.HidePopup();
-        if (_settings is null)
+        TrayFlyoutWindow flyout = EnsureFlyout();
+        flyout.ShowSettingsPage();
+        if (!flyout.IsPopupVisible)
         {
-            _settings = new SettingsWindow();
-            _settings.Closed += (_, _) =>
-            {
-                _settings = null;
-                ReleaseIdleResourcesIfNoWindows();
-            };
+            flyout.ShowPopup();
         }
-
-        _settings.Activate();
-        _settings.BringToFront();
     }
 
     private void InitializeTrayIcon()
@@ -141,12 +142,41 @@ public partial class App : Application
         MenuFlyout menu = new();
         MenuFlyoutItem open = new() { Text = $"Open {DisplayName}", Icon = new FontIcon { Glyph = "" } };
         open.Click += (_, _) => ShowFlyout();
+        string stopwatchText = ClockState.StopwatchRunning ? "Pause stopwatch"
+            : ClockState.StopwatchElapsed > TimeSpan.Zero ? "Resume stopwatch" : "Start stopwatch";
+        MenuFlyoutItem stopwatch = new() { Text = stopwatchText, Icon = new FontIcon { Glyph = "" } };
+        stopwatch.Click += (_, _) =>
+        {
+            ClockState.StopwatchToggle();
+            ClockState.PendingTab = 1;
+            ShowFlyout();
+        };
+        TimeSpan? last = ClockState.LastDuration;
+        MenuFlyoutItem repeat = new()
+        {
+            Text = last is { } d ? $"Repeat timer ({ClockFormat.Countdown(d)})" : "Repeat timer",
+            Icon = new FontIcon { Glyph = "" },
+            IsEnabled = last is not null,
+        };
+        repeat.Click += (_, _) =>
+        {
+            if (ClockState.LastDuration is { } duration)
+            {
+                ClockState.AddTimer(duration);
+                ClockState.PendingTab = 2;
+                ShowFlyout();
+            }
+        };
         MenuFlyoutItem settings = new() { Text = "Settings", Icon = new FontIcon { Glyph = "" } };
         settings.Click += (_, _) => ShowSettings();
         MenuFlyoutItem exit = new() { Text = "Exit", Icon = new FontIcon { Glyph = "" } };
         exit.Click += (_, _) => ExitApp();
 
         menu.Items.Add(open);
+        menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(stopwatch);
+        menu.Items.Add(repeat);
+        menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(settings);
         menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(exit);
@@ -171,7 +201,7 @@ public partial class App : Application
 
     private void ReleaseIdleResourcesIfNoWindows()
     {
-        if (_flyout is null && _settings is null && !_isExiting)
+        if (_flyout is null && !_isExiting)
         {
             MemoryService.ReleaseIdle();
         }
@@ -181,7 +211,6 @@ public partial class App : Application
     {
         _isExiting = true;
         _flyout?.CloseWindow();
-        _settings?.Close();
 
         if (_trayIcon is not null)
         {
