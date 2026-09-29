@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TrayClock (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "TrayClock (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
