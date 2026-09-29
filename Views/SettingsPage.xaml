@@ -1,36 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ex:WindowEx
-    x:Class="TrayClock.Views.SettingsWindow"
+<Page
+    x:Class="TrayClock.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:ex="using:WinUIEx"
-    Title="Settings">
+    Background="Transparent">
 
-    <!--  Mica for the long-lived window; the transient flyout uses acrylic like the shell's.  -->
-    <ex:WindowEx.SystemBackdrop>
-        <MicaBackdrop />
-    </ex:WindowEx.SystemBackdrop>
-
-    <Grid>
+    <Grid Padding="16,12,12,12" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TitleBar x:Name="AppTitleBar" Title="Settings">
-            <TitleBar.IconSource>
-                <ImageIconSource ImageSource="ms-appx:///Assets/StoreLogo.png" />
-            </TitleBar.IconSource>
-        </TitleBar>
+        <!--  Header  -->
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button
+                x:Name="BackButton"
+                AutomationProperties.Name="Back"
+                Click="BackButton_Click"
+                Style="{StaticResource FlyoutIconButtonStyle}"
+                ToolTipService.ToolTip="Back">
+                <FontIcon FontSize="14" Glyph="&#xE72B;" />
+            </Button>
+            <TextBlock
+                VerticalAlignment="Center"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="Settings" />
+        </StackPanel>
 
         <ScrollViewer Grid.Row="1">
-            <StackPanel Padding="24,8,24,24" Spacing="4">
+            <StackPanel Padding="0,0,4,0" Spacing="4">
                 <TextBlock
                     Margin="0,0,0,8"
                     Style="{StaticResource BodyStrongTextBlockStyle}"
                     Text="General" />
 
-                <!--  Settings card pattern without the Toolkit dependency  -->
                 <Grid
                     Padding="16,12"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -61,13 +65,13 @@
                         OnContent=""
                         Toggled="StartupToggle_Toggled" />
                 </Grid>
-
-                <TextBlock
-                    Margin="0,20,0,8"
-                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                    Text="About" />
-                <TextBlock x:Name="VersionText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
         </ScrollViewer>
+
+        <TextBlock
+            x:Name="VersionText"
+            Grid.Row="2"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            Style="{StaticResource CaptionTextBlockStyle}" />
     </Grid>
-</ex:WindowEx>
+</Page>

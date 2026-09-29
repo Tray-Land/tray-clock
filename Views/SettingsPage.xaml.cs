@@ -1,28 +1,28 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using TrayClock.Services;
 using Windows.ApplicationModel;
-using WinUIEx;
 
 namespace TrayClock.Views;
 
-public sealed partial class SettingsWindow : WindowEx
+/// <summary>Settings shown inside the flyout in place of <see cref="FlyoutPage"/>.</summary>
+public sealed partial class SettingsPage : Page
 {
+    private readonly Action _goBack;
     private bool _loading = true;
 
-    public SettingsWindow()
+    public SettingsPage(Action goBack)
     {
+        _goBack = goBack;
         InitializeComponent();
-        Title = $"{App.DisplayName} Settings";
-        AppTitleBar.Title = Title;
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
-        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"));
-        WindowPlacementService.CenterOnPrimary(this, 480, 560);
-
         VersionText.Text = $"{App.DisplayName} {GetVersion()}";
-        _ = LoadStartupStateAsync();
+        Loaded += (_, _) => BackButton.Focus(FocusState.Programmatic);
+        OnShown();
         _loading = false;
     }
+
+    /// <summary>Re-reads the startup state; it may have changed in Windows Settings.</summary>
+    public void OnShown() => _ = LoadStartupStateAsync();
 
     private static string GetVersion()
     {
@@ -69,4 +69,6 @@ public sealed partial class SettingsWindow : WindowEx
 
         ShowStartupState(await StartupService.SetEnabledAsync(StartupToggle.IsOn));
     }
+
+    private void BackButton_Click(object sender, RoutedEventArgs e) => _goBack();
 }

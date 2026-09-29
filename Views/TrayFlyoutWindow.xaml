@@ -10,6 +10,12 @@
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="Escape" Invoked="Escape_Invoked" />
         </Grid.KeyboardAccelerators>
-        <ContentPresenter x:Name="PageHost" />
+        <ContentPresenter x:Name="PageHost">
+            <ContentPresenter.ContentTransitions>
+                <TransitionCollection>
+                    <ContentThemeTransition HorizontalOffset="24" />
+                </TransitionCollection>
+            </ContentPresenter.ContentTransitions>
+        </ContentPresenter>
     </Grid>
 </ex:WindowEx>
