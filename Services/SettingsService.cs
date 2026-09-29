@@ -24,6 +24,13 @@ internal static class SettingsService
         set => Set(nameof(HasLaunchedBefore), value);
     }
 
+    /// <summary>City names shown on the Clocks tab, in order.</summary>
+    public static string[] Cities
+    {
+        get => Get<string?>(nameof(Cities), null) is { Length: > 0 } s ? s.Split('|') : ["New York", "London", "Tokyo"];
+        set => Set(nameof(Cities), string.Join('|', value));
+    }
+
     public static T? GetJson<T>(string key, JsonTypeInfo<T> typeInfo)
     {
         if (Get<string?>(key, null) is not { } json)
