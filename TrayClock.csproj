@@ -29,6 +29,10 @@
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <Content Include="Assets\AppIcon-dark.ico" />
     <Content Remove="branding\**" />
+    <Compile Remove="TrayClock.Tests\**" />
+    <Content Remove="TrayClock.Tests\**" />
+    <None Remove="TrayClock.Tests\**" />
+    <Page Remove="TrayClock.Tests\**" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />

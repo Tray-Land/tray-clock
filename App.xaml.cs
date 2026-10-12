@@ -74,9 +74,8 @@ public partial class App : Application
         InitializeTrayIcon();
 
         // A timer finishing while the flyout is hidden is the reason this app does background work.
-        ClockState.TimerFinished += item =>
+        ClockState.TimerFinished += _ =>
         {
-            SetTrayStatus($"{item.Label} finished");
             Windows.Win32.PInvoke.MessageBeep(Windows.Win32.UI.WindowsAndMessaging.MESSAGEBOX_STYLE.MB_ICONASTERISK);
             ShowFlyout();
         };
@@ -107,8 +106,15 @@ public partial class App : Application
 
     public void ShowFlyout()
     {
+        SetTrayStatus(null);
         TrayFlyoutWindow flyout = EnsureFlyout();
-        flyout.HidePopup();
+        if (flyout.IsPopupVisible)
+        {
+            // Already open (e.g. a timer finished): just bring the content to the front, no re-animation.
+            flyout.ShowMainPage();
+            return;
+        }
+
         flyout.ShowMainPage();
         flyout.ShowPopup();
     }
@@ -126,7 +132,11 @@ public partial class App : Application
     private void InitializeTrayIcon()
     {
         _trayIcon = new TrayIcon(1, TrayIconPath, DisplayName);
-        _trayIcon.Selected += (_, _) => EnsureFlyout().Toggle();
+        _trayIcon.Selected += (_, _) =>
+        {
+            SetTrayStatus(null);
+            EnsureFlyout().Toggle();
+        };
         _trayIcon.ContextMenu += TrayIcon_ContextMenu;
         _trayIcon.IsVisible = true;
         WindowPlacementService.SetTrayIcon(_trayIcon);
