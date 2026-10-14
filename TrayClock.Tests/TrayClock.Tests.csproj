@@ -17,6 +17,9 @@
   <!-- The app targets WinUI and can't load in a plain test host, so link only WinRT-free files. -->
   <ItemGroup>
     <Compile Include="..\Services\ClockFormat.cs" Link="Services\ClockFormat.cs" />
+    <Compile Include="..\Services\IcoEncoder.cs" Link="Services\IcoEncoder.cs" />
+    <Compile Include="..\Services\StopwatchIcon.cs" Link="Services\StopwatchIcon.cs" />
+    <Compile Include="..\Services\TimerIcon.cs" Link="Services\TimerIcon.cs" />
   </ItemGroup>
 
 </Project>
