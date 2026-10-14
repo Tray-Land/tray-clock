@@ -85,7 +85,10 @@ public sealed class TimerRow : INotifyPropertyChanged
     public void Refresh()
     {
         Remaining = _item.Done ? "Done" : ClockFormat.Countdown(_item.Remaining);
-        Progress = _item.Done ? 100 : 100 * (1 - (_item.Remaining.TotalSeconds / _item.Duration.TotalSeconds));
+        // Starts full and drains to empty, like the donut tray icon.
+        Progress = _item.Done || _item.Duration <= TimeSpan.Zero
+            ? 0
+            : 100 * Math.Clamp(_item.Remaining / _item.Duration, 0, 1);
         Glyph = _item.Done ? "" : _item.Running ? "" : "";
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
@@ -133,6 +136,8 @@ public sealed partial class FlyoutPage : Page, IDisposable
     /// <summary>The flyout opened: start drawing live time.</summary>
     public void OnShown()
     {
+        PinButton.IsChecked = App.Current.IsFlyoutPinned;
+
         if (ClockState.PendingTab is { } tab)
         {
             ClockState.PendingTab = null;
@@ -390,6 +395,13 @@ public sealed partial class FlyoutPage : Page, IDisposable
         {
             _timers.Add(new TimerRow(item));
         }
+    }
+
+    private void PinButton_Toggled(object sender, RoutedEventArgs e)
+    {
+        bool pinned = PinButton.IsChecked == true;
+        App.Current.IsFlyoutPinned = pinned;
+        PinIcon.Glyph = pinned ? "" : ""; // Pinned / Pin
     }
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e) => App.Current.ShowSettings();

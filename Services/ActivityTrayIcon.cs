@@ -7,14 +7,21 @@ using WinUIEx;
 namespace TrayClock.Services;
 
 /// <summary>
-/// Turns the tray icon into a live readout while something is running: a draining donut for the
-/// timer that finishes first, otherwise a ticking stopwatch. This is background work the tray icon
-/// itself displays: one one-shot dispatcher timer aimed at the next visible change (every
-/// <see cref="StopwatchStepSeconds"/> seconds for the stopwatch, one of <see cref="TimerIcon.Segments"/>
-/// steps for a timer), stopped as soon as nothing is running. Owns the generated icon handle; the
-/// shell copies the image on update, so the previous handle is freed after each switch.
+/// Turns the tray into live readouts while something is running: one icon per running timer (a
+/// draining donut) and one for a running stopwatch (a ticking hand). The primary icon takes the
+/// first activity and extra icons are created and removed as more start and stop. This is background
+/// work the tray icons themselves display: one one-shot dispatcher timer aimed at the soonest visible
+/// change (every <see cref="StopwatchStepSeconds"/> seconds for the stopwatch, one of
+/// <see cref="TimerIcon.Segments"/> steps for a timer), stopped as soon as nothing is running. Owns the
+/// generated icon handles; the shell copies the image on update, so the previous handle is freed
+/// after each switch.
 /// </summary>
-internal sealed class ActivityTrayIcon(TrayIcon trayIcon, DispatcherQueue dispatcher, Action restoreAppIcon)
+internal sealed class ActivityTrayIcon(
+    TrayIcon primary,
+    DispatcherQueue dispatcher,
+    Action restoreAppIcon,
+    Func<uint, TrayIcon> createExtra,
+    Action beforeIconCountChange)
 {
     /// <summary>How long the stopwatch hand rests between ticks.</summary>
     public const int StopwatchStepSeconds = 3;
@@ -24,44 +31,99 @@ internal sealed class ActivityTrayIcon(TrayIcon trayIcon, DispatcherQueue dispat
     // Shortest rest between redraws, so a very short timer doesn't redraw the icon in a tight loop.
     private static readonly TimeSpan MinInterval = TimeSpan.FromMilliseconds(250);
 
+    private sealed class Slot(TrayIcon icon, bool isPrimary)
+    {
+        public TrayIcon Icon { get; } = icon;
+        public bool IsPrimary { get; } = isPrimary;
+        public HICON Handle;
+    }
+
     private readonly DispatcherQueueTimer _timer = dispatcher.CreateTimer();
-    private HICON _icon;
+    private readonly List<Slot> _slots = [new Slot(primary, true)];
     private bool _active;
 
-    /// <summary>True while a generated icon is showing instead of the app icon.</summary>
+    /// <summary>True while generated icons are showing instead of the app icon.</summary>
     public bool IsActive => _active;
 
-    /// <summary>Re-reads what is running and shows the matching icon, or puts the app icon back.</summary>
+    /// <summary>Re-reads what is running and shows a matching icon for each, or puts the app icon back.</summary>
     public void Update()
     {
         _timer.Stop();
         _timer.Tick -= OnTick;
 
-        if (ClockState.NextTimer is { } timer)
+        List<TimerItem> timers = [.. ClockState.RunningTimers];
+        int count = timers.Count + (ClockState.StopwatchRunning ? 1 : 0);
+        if (count == 0)
         {
-            Show(TimerIcon.Create(IconSize, TimerIcon.Fraction(timer.Remaining, timer.Duration), Color));
-            Schedule(TimerIcon.UntilNextSegment(timer.Remaining, timer.Duration));
+            if (_active)
+            {
+                _active = false;
+                restoreAppIcon();
+                Release(_slots[0]);
+            }
+
+            if (_slots.Count > 1)
+            {
+                beforeIconCountChange();
+            }
+
+            TrimSlots(1);
+            return;
         }
-        else if (ClockState.StopwatchRunning)
+
+        if (_slots.Count != count)
+        {
+            beforeIconCountChange();
+        }
+
+        while (_slots.Count < count)
+        {
+            _slots.Add(new Slot(createExtra((uint)_slots.Count + 1), false));
+        }
+
+        TrimSlots(count);
+
+        TimeSpan soonest = TimeSpan.MaxValue;
+        for (int i = 0; i < timers.Count; i++)
+        {
+            TimerItem timer = timers[i];
+            Show(_slots[i], TimerIcon.Create(IconSize, TimerIcon.Fraction(timer.Remaining, timer.Duration), Color), timer.Label);
+            soonest = Min(soonest, TimerIcon.UntilNextSegment(timer.Remaining, timer.Duration));
+        }
+
+        if (ClockState.StopwatchRunning)
         {
             double degrees = StopwatchIcon.HandDegrees(ClockState.StopwatchElapsed, StopwatchStepSeconds);
-            Show(StopwatchIcon.Create(IconSize, degrees, Color));
+            Show(_slots[count - 1], StopwatchIcon.Create(IconSize, degrees, Color), "Stopwatch");
             double intoStep = ClockState.StopwatchElapsed.TotalSeconds % StopwatchStepSeconds;
-            Schedule(TimeSpan.FromSeconds(StopwatchStepSeconds - intoStep));
+            soonest = Min(soonest, TimeSpan.FromSeconds(StopwatchStepSeconds - intoStep));
         }
-        else if (_active)
-        {
-            _active = false;
-            restoreAppIcon();
-            Release();
-        }
+
+        _active = true;
+        Schedule(soonest);
     }
 
     public void Dispose()
     {
         _timer.Stop();
         _active = false;
-        Release();
+        Release(_slots[0]);
+        TrimSlots(1);
+    }
+
+    private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
+
+    // Removes extra icons beyond the first <paramref name="keep"/> slots.
+    private void TrimSlots(int keep)
+    {
+        while (_slots.Count > keep)
+        {
+            Slot slot = _slots[^1];
+            _slots.RemoveAt(_slots.Count - 1);
+            slot.Icon.IsVisible = false;
+            slot.Icon.Dispose();
+            Release(slot);
+        }
     }
 
     private static int IconSize =>
@@ -82,7 +144,7 @@ internal sealed class ActivityTrayIcon(TrayIcon trayIcon, DispatcherQueue dispat
         _timer.Start();
     }
 
-    private void Show(byte[] ico)
+    private void Show(Slot slot, byte[] ico, string label)
     {
         int size = ico[6];
         HICON icon;
@@ -109,18 +171,22 @@ internal sealed class ActivityTrayIcon(TrayIcon trayIcon, DispatcherQueue dispat
             return;
         }
 
-        _active = true;
-        trayIcon.SetIcon(Win32Interop.GetIconIdFromIcon(handle));
-        Release();
-        _icon = icon;
+        slot.Icon.SetIcon(Win32Interop.GetIconIdFromIcon(handle));
+        if (!slot.IsPrimary)
+        {
+            slot.Icon.Tooltip = $"{App.DisplayName}\n{label}";
+        }
+
+        Release(slot);
+        slot.Handle = icon;
     }
 
-    private void Release()
+    private static void Release(Slot slot)
     {
-        if (!_icon.IsNull)
+        if (!slot.Handle.IsNull)
         {
-            PInvoke.DestroyIcon(_icon);
-            _icon = default;
+            PInvoke.DestroyIcon(slot.Handle);
+            slot.Handle = default;
         }
     }
 }

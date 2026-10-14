@@ -43,6 +43,8 @@ public sealed partial class TrayFlyoutWindow : WindowEx
     /// </summary>
     private static readonly TimeSpan RecentDismissWindow = TimeSpan.FromMilliseconds(300);
 
+    private static readonly TimeSpan SuppressDismissWindow = TimeSpan.FromSeconds(1);
+
     private static readonly TimeSpan CloseDelay = TimeSpan.FromMinutes(1);
 
     private readonly HWND _hwnd;
@@ -60,6 +62,7 @@ public sealed partial class TrayFlyoutWindow : WindowEx
     private bool _allowClose;
     private bool _isClosed;
     private DateTime _lastDismissedAtUtc = DateTime.MinValue;
+    private DateTime _suppressDismissUntilUtc = DateTime.MinValue;
 
     // Animation state: _baseX/_baseY is the resting position; the slide animates an offset below
     // it in physical pixels. _current* is where the last frame left off, so an animation that
@@ -356,10 +359,33 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         _hideTimer.Start();
     }
 
+    /// <summary>
+    /// Adding or removing a tray icon makes the shell grab focus, which would light-dismiss the
+    /// flyout. Call just before changing tray icons; focus loss for the next moment is ignored.
+    /// </summary>
+    public void SuppressDismissal() => _suppressDismissUntilUtc = DateTime.UtcNow + SuppressDismissWindow;
+
     private void HideIfFocusLeftWindow()
     {
         _hideTimer.Stop();
-        if (_isPopupVisible && !ShouldRemainVisible(PInvoke.GetForegroundWindow()))
+        if (!_isPopupVisible || App.Current.IsFlyoutPinned)
+        {
+            return;
+        }
+
+        HWND foreground = PInvoke.GetForegroundWindow();
+        if (DateTime.UtcNow < _suppressDismissUntilUtc)
+        {
+            // Take focus back so a later click elsewhere still light-dismisses.
+            if (!ShouldRemainVisible(foreground))
+            {
+                PInvoke.SetForegroundWindow(_hwnd);
+            }
+
+            return;
+        }
+
+        if (!ShouldRemainVisible(foreground))
         {
             HidePopup();
         }

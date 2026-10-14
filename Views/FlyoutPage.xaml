@@ -19,6 +19,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock
                 VerticalAlignment="Center"
@@ -44,8 +45,18 @@
                 ToolTipService.ToolTip="Compare a different time">
                 <FontIcon FontSize="14" Glyph="&#xE121;" />
             </ToggleButton>
-            <Button
+            <ToggleButton
+                x:Name="PinButton"
                 Grid.Column="3"
+                AutomationProperties.Name="Pin open"
+                Checked="PinButton_Toggled"
+                Unchecked="PinButton_Toggled"
+                Style="{StaticResource FlyoutIconToggleButtonStyle}"
+                ToolTipService.ToolTip="Keep open">
+                <FontIcon x:Name="PinIcon" FontSize="14" Glyph="&#xE718;" />
+            </ToggleButton>
+            <Button
+                Grid.Column="4"
                 AutomationProperties.Name="Settings"
                 Click="SettingsButton_Click"
                 Style="{StaticResource FlyoutIconButtonStyle}"
@@ -223,24 +234,28 @@
                             <DataTemplate x:DataType="local:TimerRow">
                                 <Grid Padding="0,4" ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                    <ProgressRing
+                                        Width="40"
+                                        Height="40"
+                                        VerticalAlignment="Center"
+                                        IsIndeterminate="False"
+                                        Maximum="100"
+                                        Value="{x:Bind Progress, Mode=OneWay}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock
                                             Style="{StaticResource BodyStrongTextBlockStyle}"
                                             Text="{x:Bind Label}"
                                             TextTrimming="CharacterEllipsis" />
-                                        <ProgressBar Maximum="100" Value="{x:Bind Progress, Mode=OneWay}" />
+                                        <TextBlock
+                                            FontFamily="Consolas"
+                                            Style="{StaticResource TitleTextBlockStyle}"
+                                            Text="{x:Bind Remaining, Mode=OneWay}" />
                                     </StackPanel>
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        FontFamily="Consolas"
-                                        Style="{StaticResource TitleTextBlockStyle}"
-                                        Text="{x:Bind Remaining, Mode=OneWay}" />
                                     <Button
                                         Grid.Column="2"
                                         AutomationProperties.Name="Start or pause"

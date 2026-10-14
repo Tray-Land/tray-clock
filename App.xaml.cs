@@ -43,6 +43,9 @@ public partial class App : Application
 
     public static new App Current => (App)Application.Current;
 
+    /// <summary>While true the flyout stays open when focus leaves it; the pin button toggles this.</summary>
+    public bool IsFlyoutPinned { get; set; }
+
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         _singleInstanceMutex = new Mutex(true, MutexName, out bool createdNew);
@@ -141,7 +144,8 @@ public partial class App : Application
         _trayIcon.ContextMenu += TrayIcon_ContextMenu;
         _trayIcon.IsVisible = true;
         WindowPlacementService.SetTrayIcon(_trayIcon);
-        _activityIcon = new ActivityTrayIcon(_trayIcon, _dispatcher!, () => _trayIcon?.SetIcon(TrayIconPath));
+        _activityIcon = new ActivityTrayIcon(_trayIcon, _dispatcher!, () => _trayIcon?.SetIcon(TrayIconPath), CreateExtraTrayIcon,
+            () => _flyout?.SuppressDismissal());
         SystemThemeService.Changed += (_, _) => _dispatcher?.TryEnqueue(() =>
         {
             if (_activityIcon?.IsActive == true)
@@ -156,6 +160,20 @@ public partial class App : Application
 
         // The tray icon becomes a draining timer or a ticking stopwatch while one runs, even with the flyout closed.
         ClockState.ActivityChanged += () => _activityIcon?.Update();
+    }
+
+    // Each additional running timer or stopwatch gets its own icon; clicks and the menu behave like the primary's.
+    private TrayIcon CreateExtraTrayIcon(uint id)
+    {
+        TrayIcon icon = new(id, TrayIconPath, DisplayName);
+        icon.Selected += (_, _) =>
+        {
+            SetTrayStatus(null);
+            EnsureFlyout().Toggle();
+        };
+        icon.ContextMenu += TrayIcon_ContextMenu;
+        icon.IsVisible = true;
+        return icon;
     }
 
     // A white glyph disappears on a light taskbar, which follows the Windows theme, not the app theme.

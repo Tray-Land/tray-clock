@@ -82,6 +82,9 @@ internal static class ClockState
     /// <summary>The running timer that finishes first, which the tray icon counts down; null when none is running.</summary>
     public static TimerItem? NextTimer => TimerList.Where(t => t.Running).MinBy(t => t.Remaining);
 
+    /// <summary>Every running timer in creation order, so each keeps its own tray icon slot.</summary>
+    public static IReadOnlyList<TimerItem> RunningTimers => TimerList.Where(t => t.Running).OrderBy(t => t.Id).ToList();
+
     /// <summary>Tab the flyout should open on next (0 clocks, 1 stopwatch, 2 timers); the flyout consumes it.</summary>
     public static int? PendingTab { get; set; }
 
