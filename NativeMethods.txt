@@ -1,5 +1,7 @@
 AllowSetForegroundWindow
 APPBARDATA
+CreateIconFromResourceEx
+DestroyIcon
 DwmSetWindowAttribute
 DWM_WINDOW_CORNER_PREFERENCE
 GetAncestor
@@ -7,8 +9,10 @@ GetClassName
 GetCurrentProcess
 GetCursorPos
 GetDpiForMonitor
+GetDpiForSystem
 GetDpiForWindow
 GetForegroundWindow
+GetSystemMetricsForDpi
 GetWindowLong
 MessageBeep
 MonitorFromPoint

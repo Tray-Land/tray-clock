@@ -76,6 +76,12 @@ internal static class ClockState
 
     public static event Action<TimerItem>? TimerFinished;
 
+    /// <summary>Raised when the stopwatch starts, pauses, or resets, or a timer starts, pauses, finishes, or is removed; the tray icon follows it.</summary>
+    public static event Action? ActivityChanged;
+
+    /// <summary>The running timer that finishes first, which the tray icon counts down; null when none is running.</summary>
+    public static TimerItem? NextTimer => TimerList.Where(t => t.Running).MinBy(t => t.Remaining);
+
     /// <summary>Tab the flyout should open on next (0 clocks, 1 stopwatch, 2 timers); the flyout consumes it.</summary>
     public static int? PendingTab { get; set; }
 
@@ -97,6 +103,8 @@ internal static class ClockState
         {
             Watch.Start();
         }
+
+        ActivityChanged?.Invoke();
     }
 
     public static void StopwatchLap()
@@ -111,6 +119,7 @@ internal static class ClockState
     {
         Watch.Reset();
         LapTotals.Clear();
+        ActivityChanged?.Invoke();
     }
 
     // Timers
@@ -161,6 +170,12 @@ internal static class ClockState
         : $"{ClockFormat.Countdown(d)} timer";
 
     private static void Reschedule()
+    {
+        ArmAlarm();
+        ActivityChanged?.Invoke();
+    }
+
+    private static void ArmAlarm()
     {
         _alarm ??= DispatcherQueue.GetForCurrentThread().CreateTimer();
         _alarm.Stop();

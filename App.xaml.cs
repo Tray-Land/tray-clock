@@ -26,6 +26,7 @@ public partial class App : Application
     private EventWaitHandle? _showEvent;
     private RegisteredWaitHandle? _showWait;
     private TrayIcon? _trayIcon;
+    private ActivityTrayIcon? _activityIcon;
     private TrayFlyoutWindow? _flyout;
     private DispatcherQueue? _dispatcher;
     private bool _isExiting;
@@ -140,7 +141,21 @@ public partial class App : Application
         _trayIcon.ContextMenu += TrayIcon_ContextMenu;
         _trayIcon.IsVisible = true;
         WindowPlacementService.SetTrayIcon(_trayIcon);
-        SystemThemeService.Changed += (_, _) => _dispatcher?.TryEnqueue(() => _trayIcon?.SetIcon(TrayIconPath));
+        _activityIcon = new ActivityTrayIcon(_trayIcon, _dispatcher!, () => _trayIcon?.SetIcon(TrayIconPath));
+        SystemThemeService.Changed += (_, _) => _dispatcher?.TryEnqueue(() =>
+        {
+            if (_activityIcon?.IsActive == true)
+            {
+                _activityIcon.Update();
+            }
+            else
+            {
+                _trayIcon?.SetIcon(TrayIconPath);
+            }
+        });
+
+        // The tray icon becomes a draining timer or a ticking stopwatch while one runs, even with the flyout closed.
+        ClockState.ActivityChanged += () => _activityIcon?.Update();
     }
 
     // A white glyph disappears on a light taskbar, which follows the Windows theme, not the app theme.
@@ -221,6 +236,9 @@ public partial class App : Application
     {
         _isExiting = true;
         _flyout?.CloseWindow();
+
+        _activityIcon?.Dispose();
+        _activityIcon = null;
 
         if (_trayIcon is not null)
         {
