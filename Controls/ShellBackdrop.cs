@@ -36,6 +36,14 @@ public sealed partial class ShellBackdrop : SystemBackdrop
         _controller = null;
     }
 
+    // XAML raises this when the app or system theme changes. The base implementation throws
+    // E_INVALIDARG for a target we've already connected ourselves, and this backdrop drives its own
+    // configuration through Update (from the shell theme), so there is nothing to forward.
+    protected override void OnDefaultSystemBackdropConfigurationChanged(
+        ICompositionSupportsSystemBackdrop target, XamlRoot xamlRoot)
+    {
+    }
+
     /// <summary>Sets the light/dark look and the accent tint (null for the neutral look).</summary>
     public void Update(bool isLight, Color? accentTint)
     {
