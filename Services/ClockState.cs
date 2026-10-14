@@ -12,7 +12,12 @@ internal sealed class TimerItem(int id, string label, TimeSpan duration)
     public string Label { get; } = label;
     public TimeSpan Duration { get; } = duration;
     public bool Running { get; private set; }
+
+    /// <summary>Finished and going off until the user dismisses or restarts it.</summary>
     public bool Done { get; private set; }
+
+    /// <summary>Stopped at its full duration: new, or dismissed after going off.</summary>
+    public bool Ready => !Running && !Done && _left == Duration;
 
     public TimeSpan Remaining => Done ? TimeSpan.Zero
         : Running ? TimeSpan.FromMilliseconds(Math.Max(0, _endTick - Environment.TickCount64))
@@ -42,10 +47,15 @@ internal sealed class TimerItem(int id, string label, TimeSpan duration)
 
     public void Restart()
     {
+        Reset();
+        Start();
+    }
+
+    public void Reset()
+    {
         _left = Duration;
         Done = false;
         Running = false;
-        Start();
     }
 
     internal bool CompleteIfElapsed()
@@ -161,6 +171,18 @@ internal static class ClockState
         Reschedule();
     }
 
+    /// <summary>Silences a finished timer and sets it back to its full duration, ready to start again.</summary>
+    public static void DismissTimer(int id)
+    {
+        if (TimerList.FirstOrDefault(t => t.Id == id) is not { } item)
+        {
+            return;
+        }
+
+        item.Reset();
+        Reschedule();
+    }
+
     public static void RemoveTimer(int id)
     {
         TimerList.RemoveAll(t => t.Id == id);
@@ -170,6 +192,7 @@ internal static class ClockState
     private static string DefaultLabel(TimeSpan d) =>
         d.TotalHours >= 1 && d.Minutes == 0 && d.Seconds == 0 ? $"{(int)d.TotalHours} hour timer"
         : d.TotalMinutes >= 1 && d.Seconds == 0 ? $"{(int)d.TotalMinutes} min timer"
+        : d.TotalMinutes < 1 ? $"{(int)d.TotalSeconds} sec timer"
         : $"{ClockFormat.Countdown(d)} timer";
 
     private static void Reschedule()
