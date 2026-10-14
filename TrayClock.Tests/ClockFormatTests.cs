@@ -39,6 +39,39 @@ public sealed class ClockFormatTests
     }
 
     [TestMethod]
+    [DataRow(0, "Now")]
+    [DataRow(180, "+3h")]
+    [DataRow(-45, "-45m")]
+    [DataRow(135, "+2h 15m")]
+    [DataRow(-720, "-12h")]
+    public void Shift_Minutes_FormatsCompactly(int minutes, string expected)
+    {
+        Assert.AreEqual(expected, ClockFormat.Shift(TimeSpan.FromMinutes(minutes)));
+    }
+
+    [TestMethod]
+    [DataRow(5, false)]
+    [DataRow(6, true)]
+    [DataRow(17, true)]
+    [DataRow(18, false)]
+    public void IsDaytime_Hour_SixToSix(int hour, bool expected)
+    {
+        Assert.AreEqual(expected, ClockFormat.IsDaytime(new DateTimeOffset(2026, 10, 13, hour, 30, 0, TimeSpan.Zero)));
+    }
+
+    [TestMethod]
+    public void StopwatchParts_UnderOneHour_SplitsHundredths()
+    {
+        Assert.AreEqual(("01:24", ".09"), ClockFormat.StopwatchParts(new TimeSpan(0, 0, 1, 24, 90)));
+    }
+
+    [TestMethod]
+    public void StopwatchParts_OverOneHour_KeepsHoursInWhole()
+    {
+        Assert.AreEqual(("2:03:04", ".05"), ClockFormat.StopwatchParts(new TimeSpan(0, 2, 3, 4, 50)));
+    }
+
+    [TestMethod]
     public void Describe_SameZone_IsToday()
     {
         Assert.AreEqual("Today", ClockFormat.Describe(DateTimeOffset.Now, TimeZoneInfo.Local));

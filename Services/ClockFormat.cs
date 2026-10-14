@@ -5,11 +5,23 @@ namespace TrayClock.Services;
 /// <summary>Pure formatting and time-zone math, free of WinRT so it is easy to test.</summary>
 internal static class ClockFormat
 {
-    /// <summary>The instant at <paramref name="timeOfDay"/> today in the local zone.</summary>
-    public static DateTimeOffset LocalInstant(TimeSpan timeOfDay)
+    /// <summary>Daylight hours (6 AM to 6 PM) at that place, for the sun or moon beside a clock.</summary>
+    public static bool IsDaytime(DateTimeOffset local) => local.Hour is >= 6 and < 18;
+
+    /// <summary>"Now", "+3h", "-45m", or "+2h 15m" for the compare-times slider.</summary>
+    public static string Shift(TimeSpan shift)
     {
-        DateTime local = DateTime.Today + timeOfDay;
-        return new DateTimeOffset(local, TimeZoneInfo.Local.GetUtcOffset(local));
+        if (shift == TimeSpan.Zero)
+        {
+            return "Now";
+        }
+
+        string sign = shift < TimeSpan.Zero ? "-" : "+";
+        TimeSpan abs = shift.Duration();
+        int hours = (int)abs.TotalHours;
+        return hours == 0 ? $"{sign}{abs.Minutes}m"
+            : abs.Minutes == 0 ? $"{sign}{hours}h"
+            : $"{sign}{hours}h {abs.Minutes}m";
     }
 
     /// <summary>"Today · +5h", "Tomorrow · -3:30h", or just the day for the local zone.</summary>
@@ -40,6 +52,14 @@ internal static class ClockFormat
         t.TotalHours >= 1
             ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}.{t.Milliseconds / 10:00}"
             : $"{t.Minutes:00}:{t.Seconds:00}.{t.Milliseconds / 10:00}";
+
+    /// <summary>The stopwatch text split for display: ("01:24", ".09"), so the hundredths can be drawn smaller.</summary>
+    public static (string Whole, string Fraction) StopwatchParts(TimeSpan t)
+    {
+        string text = Stopwatch(t);
+        int dot = text.LastIndexOf('.');
+        return (text[..dot], text[dot..]);
+    }
 
     public static string Countdown(TimeSpan t)
     {

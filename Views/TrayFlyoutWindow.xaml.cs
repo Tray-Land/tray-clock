@@ -25,7 +25,7 @@ namespace TrayClock.Views;
 public sealed partial class TrayFlyoutWindow : WindowEx
 {
     private const int PopupWidth = 360;
-    private const int PopupHeight = 480;
+    private const int PopupHeight = 540;
 
     private const int WS_EX_TOOLWINDOW = 0x00000080;
     private const int WS_EX_LAYERED = 0x00080000;

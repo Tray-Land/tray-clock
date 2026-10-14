@@ -6,18 +6,17 @@
     xmlns:local="using:TrayClock.Views"
     Background="Transparent">
 
-    <Grid Padding="16,12,12,12" RowSpacing="4">
+    <Grid Padding="16,12,16,16" RowSpacing="12">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Header  -->
-        <Grid ColumnSpacing="4">
+        <!--  Header: the icon buttons hang 8 px into the padding so their glyphs line up with the content edge.  -->
+        <Grid Margin="0,0,-8,0" ColumnSpacing="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -26,37 +25,22 @@
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Text="Tray Clock" />
             <ToggleButton
-                x:Name="AddCityButton"
-                Grid.Column="1"
-                AutomationProperties.Name="Add city"
-                Checked="AddCityButton_Toggled"
-                Unchecked="AddCityButton_Toggled"
-                Style="{StaticResource FlyoutIconToggleButtonStyle}"
-                ToolTipService.ToolTip="Add city">
-                <FontIcon FontSize="14" Glyph="&#xE710;" />
-            </ToggleButton>
-            <ToggleButton
-                x:Name="TimeShiftButton"
-                Grid.Column="2"
-                AutomationProperties.Name="Time shift"
-                Checked="TimeShiftButton_Toggled"
-                Unchecked="TimeShiftButton_Toggled"
-                Style="{StaticResource FlyoutIconToggleButtonStyle}"
-                ToolTipService.ToolTip="Compare a different time">
-                <FontIcon FontSize="14" Glyph="&#xE121;" />
-            </ToggleButton>
-            <ToggleButton
                 x:Name="PinButton"
-                Grid.Column="3"
-                AutomationProperties.Name="Pin open"
+                Grid.Column="1"
+                AutomationProperties.AutomationId="PinButton"
+                AutomationProperties.Name="Keep open"
                 Checked="PinButton_Toggled"
-                Unchecked="PinButton_Toggled"
                 Style="{StaticResource FlyoutIconToggleButtonStyle}"
-                ToolTipService.ToolTip="Keep open">
-                <FontIcon x:Name="PinIcon" FontSize="14" Glyph="&#xE718;" />
+                ToolTipService.ToolTip="Keep open"
+                Unchecked="PinButton_Toggled">
+                <FontIcon
+                    x:Name="PinIcon"
+                    FontSize="14"
+                    Glyph="&#xE718;" />
             </ToggleButton>
             <Button
-                Grid.Column="4"
+                Grid.Column="2"
+                AutomationProperties.AutomationId="SettingsButton"
                 AutomationProperties.Name="Settings"
                 Click="SettingsButton_Click"
                 Style="{StaticResource FlyoutIconButtonStyle}"
@@ -65,219 +49,728 @@
             </Button>
         </Grid>
 
-        <Pivot
+        <!--  Tabs keep a fixed order (a Pivot rotates its headers, so the tab you want moves around).  -->
+        <SelectorBar
             x:Name="Tabs"
             Grid.Row="1"
-            Margin="0,0,4,0"
+            Margin="-4,0,0,0"
+            AutomationProperties.Name="Tabs"
             SelectionChanged="Tabs_SelectionChanged">
+            <SelectorBarItem
+                AutomationProperties.AutomationId="ClocksTab"
+                IsSelected="True"
+                Text="Clocks">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE774;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+            <SelectorBarItem AutomationProperties.AutomationId="StopwatchTab" Text="Stopwatch">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE916;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+            <SelectorBarItem AutomationProperties.AutomationId="TimersTab" Text="Timers">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xEA8F;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+        </SelectorBar>
+
+        <Grid Grid.Row="2">
             <!--  Clocks  -->
-            <PivotItem Header="Clocks">
-                <Grid RowSpacing="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+            <Grid x:Name="ClocksPanel" RowSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                    <ComboBox
-                        x:Name="CityPicker"
-                        Visibility="Collapsed"
-                        HorizontalAlignment="Stretch"
-                        AutomationProperties.Name="Add a city"
-                        PlaceholderText="Add a city…"
-                        SelectionChanged="CityPicker_SelectionChanged" />
-
-
-                    <ListView
-                        x:Name="CityList"
-                        Grid.Row="1"
-                        AllowDrop="True"
-                        CanReorderItems="True"
-                        ContainerContentChanging="CityList_ContainerContentChanging"
-                        DragItemsCompleted="CityList_DragItemsCompleted"
-                        SelectionMode="None">
-                        <ListView.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
-                                <Setter Property="Padding" Value="0" />
-                                <Setter Property="MinHeight" Value="0" />
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="local:CityRow">
-                                <SwipeControl>
-                                    <Grid Padding="0,4,8,4" ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="92" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind Name}" />
-                                            <TextBlock
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                Text="{x:Bind Detail, Mode=OneWay}" />
-                                        </StackPanel>
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Style="{StaticResource SubtitleTextBlockStyle}"
-                                            Text="{x:Bind Time, Mode=OneWay}"
-                                            TextAlignment="Right"
-                                            Visibility="{x:Bind TimeVisibility, Mode=OneWay}" />
-                                        <Viewbox
-                                            Grid.ColumnSpan="2"
-                                            Width="190"
-                                            HorizontalAlignment="Right"
-                                            StretchDirection="DownOnly"
-                                            Visibility="{x:Bind PickerVisibility, Mode=OneWay}">
-                                            <TimePicker
-                                                AutomationProperties.Name="Local time to compare"
-                                                SelectedTime="{x:Bind PlannedTime, Mode=TwoWay}" />
-                                        </Viewbox>
-                                    </Grid>
-                                </SwipeControl>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </PivotItem>
-
-            <!--  Stopwatch  -->
-            <PivotItem Header="Stopwatch">
-                <Grid RowSpacing="12">
+                <!--  Local time, with a slider to look ahead or back across every clock.  -->
+                <Grid
+                    Padding="16,12,16,8"
+                    ColumnSpacing="8"
+                    Style="{StaticResource CardStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <FontIcon
+                            x:Name="LocalDayIcon"
+                            AutomationProperties.AccessibilityView="Raw"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock x:Name="LocalCaption" Style="{StaticResource SectionLabelTextBlockStyle}" />
+                    </StackPanel>
                     <TextBlock
-                        x:Name="StopwatchText"
-                        Margin="0,12,0,0"
-                        HorizontalAlignment="Center"
-                        FontFamily="Consolas"
-                        FontSize="48"
-                        Text="00:00.00" />
+                        x:Name="LocalTimeText"
+                        Grid.Row="1"
+                        FontSize="40"
+                        Style="{StaticResource DigitsTextBlockStyle}" />
                     <StackPanel
                         Grid.Row="1"
-                        HorizontalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="8">
-                        <Button
-                            x:Name="StopwatchStartButton"
-                            MinWidth="88"
-                            Click="StopwatchStart_Click"
-                            Content="Start"
-                            Style="{StaticResource AccentButtonStyle}" />
-                        <Button
-                            x:Name="StopwatchLapButton"
-                            MinWidth="88"
-                            Click="StopwatchLap_Click"
-                            Content="Lap" />
-                        <Button
-                            x:Name="StopwatchResetButton"
-                            MinWidth="88"
-                            Click="StopwatchReset_Click"
-                            Content="Reset" />
+                        Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Spacing="2">
+                        <TextBlock
+                            x:Name="ShiftText"
+                            HorizontalAlignment="Right"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <HyperlinkButton
+                            x:Name="BackToNowButton"
+                            Padding="4,0"
+                            HorizontalAlignment="Right"
+                            AutomationProperties.AutomationId="BackToNowButton"
+                            Click="BackToNow_Click"
+                            Content="Back to now"
+                            FontSize="12" />
                     </StackPanel>
-                    <ListView
-                        x:Name="LapList"
+                    <Slider
+                        x:Name="ShiftSlider"
                         Grid.Row="2"
-                        SelectionMode="None">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <TextBlock FontFamily="Consolas" Text="{x:Bind}" />
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </PivotItem>
-
-            <!--  Timers  -->
-            <PivotItem Header="Timers">
-                <Grid RowSpacing="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Click="PresetTimer_Click" Content="1 min" Tag="60" />
-                        <Button Click="PresetTimer_Click" Content="5 min" Tag="300" />
-                        <Button Click="PresetTimer_Click" Content="10 min" Tag="600" />
-                        <Button Click="PresetTimer_Click" Content="25 min" Tag="1500" />
-                    </StackPanel>
-
-                    <Grid Grid.Row="1" ColumnSpacing="6">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <NumberBox x:Name="HoursBox" SpinButtonPlacementMode="Compact" SmallChange="1" LargeChange="5" Header="Hours" Minimum="0" Maximum="99" Value="0" />
-                        <NumberBox x:Name="MinutesBox" SpinButtonPlacementMode="Compact" SmallChange="1" LargeChange="5" Grid.Column="1" Header="Min" Minimum="0" Maximum="999" Value="0" />
-                        <NumberBox x:Name="SecondsBox" SpinButtonPlacementMode="Compact" SmallChange="1" LargeChange="5" Grid.Column="2" Header="Sec" Minimum="0" Maximum="999" Value="0" />
-                    </Grid>
-
-                    <Button
-                        Grid.Row="2"
-                        HorizontalAlignment="Stretch"
-                        Click="CustomTimer_Click"
-                        Content="Start timer"
-                        Style="{StaticResource AccentButtonStyle}" />
-
-                    <ListView
-                        x:Name="TimerListView"
+                        Grid.ColumnSpan="2"
+                        AutomationProperties.AutomationId="CompareTimesSlider"
+                        AutomationProperties.Name="Compare times, minutes from now"
+                        IsThumbToolTipEnabled="False"
+                        LargeChange="60"
+                        Maximum="720"
+                        Minimum="-720"
+                        SmallChange="15"
+                        SnapsTo="StepValues"
+                        StepFrequency="15"
+                        TickFrequency="180"
+                        TickPlacement="Outside"
+                        ToolTipService.ToolTip="Drag to compare another time"
+                        ValueChanged="ShiftSlider_ValueChanged">
+                        <!--  Time runs both ways from the middle, so don't fill the track from the left as if -12h were the start.  -->
+                        <Slider.Resources>
+                            <StaticResource x:Key="SliderTrackValueFill" ResourceKey="SliderTrackFill" />
+                            <StaticResource x:Key="SliderTrackValueFillPointerOver" ResourceKey="SliderTrackFillPointerOver" />
+                            <StaticResource x:Key="SliderTrackValueFillPressed" ResourceKey="SliderTrackFillPressed" />
+                        </Slider.Resources>
+                    </Slider>
+                    <Grid
                         Grid.Row="3"
-                        SelectionMode="None">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="local:TimerRow">
-                                <Grid Padding="0,4" ColumnSpacing="8">
+                        Grid.ColumnSpan="2"
+                        Margin="0,-4,0,0"
+                        AutomationProperties.AccessibilityView="Raw">
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="-12h" />
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Now" />
+                        <TextBlock
+                            HorizontalAlignment="Right"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="+12h" />
+                    </Grid>
+                </Grid>
+
+                <ListView
+                    x:Name="CityList"
+                    Grid.Row="1"
+                    AllowDrop="True"
+                    AutomationProperties.Name="World clocks"
+                    CanReorderItems="True"
+                    ContainerContentChanging="CityList_ContainerContentChanging"
+                    DragItemsCompleted="CityList_DragItemsCompleted"
+                    ItemContainerStyle="{StaticResource CardListViewItemStyle}"
+                    SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="local:CityRow">
+                            <SwipeControl CornerRadius="8">
+                                <Grid
+                                    Padding="12,8,4,8"
+                                    ColumnSpacing="10"
+                                    Style="{StaticResource CardStyle}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <ProgressRing
-                                        Width="40"
-                                        Height="40"
+                                    <FontIcon
                                         VerticalAlignment="Center"
-                                        IsIndeterminate="False"
-                                        Maximum="100"
-                                        Value="{x:Bind Progress, Mode=OneWay}" />
+                                        AutomationProperties.AccessibilityView="Raw"
+                                        FontSize="14"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Glyph="{x:Bind DayGlyph, Mode=OneWay}" />
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock
                                             Style="{StaticResource BodyStrongTextBlockStyle}"
-                                            Text="{x:Bind Label}"
+                                            Text="{x:Bind Name}"
                                             TextTrimming="CharacterEllipsis" />
                                         <TextBlock
-                                            FontFamily="Consolas"
-                                            Style="{StaticResource TitleTextBlockStyle}"
-                                            Text="{x:Bind Remaining, Mode=OneWay}" />
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind Detail, Mode=OneWay}" />
                                     </StackPanel>
-                                    <Button
+                                    <TextBlock
                                         Grid.Column="2"
-                                        AutomationProperties.Name="Start or pause"
-                                        Click="ToggleTimer_Click"
-                                        Style="{StaticResource FlyoutIconButtonStyle}"
-                                        Tag="{x:Bind Id}">
-                                        <FontIcon FontSize="12" Glyph="{x:Bind Glyph, Mode=OneWay}" />
-                                    </Button>
+                                        VerticalAlignment="Center"
+                                        FontSize="20"
+                                        Style="{StaticResource DigitsTextBlockStyle}"
+                                        Text="{x:Bind Time, Mode=OneWay}" />
                                     <Button
                                         Grid.Column="3"
-                                        AutomationProperties.Name="Delete timer"
-                                        Click="RemoveTimer_Click"
+                                        Width="28"
+                                        AutomationProperties.Name="{x:Bind MoreName}"
+                                        Click="CityMore_Click"
                                         Style="{StaticResource FlyoutIconButtonStyle}"
-                                        Tag="{x:Bind Id}">
-                                        <FontIcon FontSize="12" Glyph="&#xE711;" />
+                                        ToolTipService.ToolTip="More options">
+                                        <FontIcon
+                                            FontSize="14"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Glyph="&#xE712;" />
                                     </Button>
                                 </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                            </SwipeControl>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <TextBlock
+                    x:Name="CitiesEmptyText"
+                    Grid.Row="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Add a city to see its time next to yours."
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+
+                <AutoSuggestBox
+                    x:Name="CitySearch"
+                    Grid.Row="2"
+                    AutomationProperties.AutomationId="AddCityBox"
+                    AutomationProperties.Name="Add a city"
+                    GotFocus="CitySearch_GotFocus"
+                    PlaceholderText="Add a city"
+                    QuerySubmitted="CitySearch_QuerySubmitted"
+                    TextChanged="CitySearch_TextChanged"
+                    UpdateTextOnSelect="False">
+                    <AutoSuggestBox.QueryIcon>
+                        <FontIcon FontSize="12" Glyph="&#xE710;" />
+                    </AutoSuggestBox.QueryIcon>
+                </AutoSuggestBox>
+            </Grid>
+
+            <!--  Stopwatch  -->
+            <Grid
+                x:Name="StopwatchPanel"
+                RowSpacing="16"
+                Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Padding="16,12,16,16" Style="{StaticResource CardStyle}">
+                    <StackPanel HorizontalAlignment="Center" Spacing="2">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="6">
+                            <Ellipse
+                                x:Name="StopwatchDot"
+                                Width="8"
+                                Height="8"
+                                VerticalAlignment="Center"
+                                Fill="{ThemeResource AccentFillColorDefaultBrush}" />
+                            <TextBlock x:Name="StopwatchStatus" Style="{StaticResource SectionLabelTextBlockStyle}" />
+                        </StackPanel>
+                        <!--
+                            Both parts trimmed to their baseline and bottom-aligned, so the smaller hundredths sit on the
+                            same line; fixed-width digit slots keep the readout from shifting as it ticks.
+                        -->
+                        <StackPanel
+                            x:Name="StopwatchDisplay"
+                            Margin="0,4,0,0"
+                            HorizontalAlignment="Center"
+                            AutomationProperties.Name="Elapsed time"
+                            Orientation="Horizontal">
+                            <local:DigitText
+                                x:Name="StopwatchWhole"
+                                VerticalAlignment="Bottom"
+                                AutomationProperties.AccessibilityView="Raw"
+                                FontFamily="Segoe UI Variable Display"
+                                FontSize="56"
+                                FontWeight="SemiBold" />
+                            <local:DigitText
+                                x:Name="StopwatchFraction"
+                                VerticalAlignment="Bottom"
+                                AutomationProperties.AccessibilityView="Raw"
+                                FontFamily="Segoe UI Variable Display"
+                                FontSize="32"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
                 </Grid>
-            </PivotItem>
-        </Pivot>
+
+                <Grid Grid.Row="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button
+                        x:Name="StopwatchStartButton"
+                        HorizontalAlignment="Stretch"
+                        AutomationProperties.AutomationId="StopwatchStartButton"
+                        Click="StopwatchStart_Click"
+                        Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon
+                                x:Name="StopwatchStartIcon"
+                                FontSize="14"
+                                Glyph="&#xE768;" />
+                            <TextBlock x:Name="StopwatchStartLabel" Text="Start" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        x:Name="StopwatchLapButton"
+                        Grid.Column="1"
+                        HorizontalAlignment="Stretch"
+                        AutomationProperties.AutomationId="StopwatchLapButton"
+                        AutomationProperties.Name="Lap"
+                        Click="StopwatchLap_Click"
+                        ToolTipService.ToolTip="Record a lap while running">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE7C1;" />
+                            <TextBlock Text="Lap" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        x:Name="StopwatchResetButton"
+                        Grid.Column="2"
+                        HorizontalAlignment="Stretch"
+                        AutomationProperties.AutomationId="StopwatchResetButton"
+                        AutomationProperties.Name="Reset"
+                        Click="StopwatchReset_Click"
+                        ToolTipService.ToolTip="Clear the time and laps">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                            <TextBlock Text="Reset" />
+                        </StackPanel>
+                    </Button>
+                    <!--  Hangs 8 px into the page padding so its glyph lines up with the content edge, like the header buttons.  -->
+                    <Button
+                        x:Name="StopwatchMoreButton"
+                        Grid.Column="3"
+                        Width="32"
+                        Margin="0,0,-8,0"
+                        AutomationProperties.AutomationId="StopwatchMoreButton"
+                        AutomationProperties.Name="More stopwatch options"
+                        Style="{StaticResource FlyoutIconButtonStyle}"
+                        ToolTipService.ToolTip="More options">
+                        <FontIcon
+                            x:Name="StopwatchMoreIcon"
+                            FontSize="14"
+                            Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout Opening="StopwatchMenu_Opening" Placement="BottomEdgeAlignedRight">
+                                <MenuFlyoutItem
+                                    x:Name="CopyLapsItem"
+                                    AutomationProperties.AutomationId="CopyLapsItem"
+                                    Click="CopyLaps_Click"
+                                    Text="Copy laps as a table"
+                                    ToolTipService.ToolTip="Paste into Excel or another spreadsheet">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+
+                <Grid Grid.Row="2" RowSpacing="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid
+                        x:Name="LapHeader"
+                        Padding="12,0"
+                        ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="80" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SectionLabelTextBlockStyle}" Text="Lap" />
+                        <TextBlock
+                            Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            Style="{StaticResource SectionLabelTextBlockStyle}"
+                            Text="Split" />
+                        <TextBlock
+                            Grid.Column="3"
+                            HorizontalAlignment="Right"
+                            Style="{StaticResource SectionLabelTextBlockStyle}"
+                            Text="Total" />
+                    </Grid>
+                    <ScrollViewer Grid.Row="1">
+                        <ItemsRepeater x:Name="LapList">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Spacing="2" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="local:LapRow">
+                                    <Grid
+                                        Padding="12,6"
+                                        AutomationProperties.Name="{x:Bind Description}"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        ColumnSpacing="8"
+                                        CornerRadius="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="80" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{x:Bind Number}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="Fastest"
+                                            VerticalAlignment="Center"
+                                            Visibility="{x:Bind FastestVisibility}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="Slowest"
+                                            VerticalAlignment="Center"
+                                            Visibility="{x:Bind SlowestVisibility}" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            HorizontalAlignment="Right"
+                                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                                            Text="{x:Bind Split}" />
+                                        <TextBlock
+                                            Grid.Column="3"
+                                            HorizontalAlignment="Right"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind Total}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </ScrollViewer>
+                    <TextBlock
+                        x:Name="LapsEmptyText"
+                        Grid.RowSpan="2"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Press Lap while it runs to record splits."
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </Grid>
+            </Grid>
+
+            <!--  Timers  -->
+            <Grid
+                x:Name="TimersPanel"
+                RowSpacing="16"
+                Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Spacing="8">
+                    <TextBlock Style="{StaticResource SectionLabelTextBlockStyle}" Text="Quick start" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.Name="Start a 1 minute timer"
+                            Click="PresetTimer_Click"
+                            Content="1 min"
+                            Tag="60"
+                            ToolTipService.ToolTip="Start a 1 minute timer" />
+                        <Button
+                            Grid.Column="1"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.Name="Start a 5 minute timer"
+                            Click="PresetTimer_Click"
+                            Content="5 min"
+                            Tag="300"
+                            ToolTipService.ToolTip="Start a 5 minute timer" />
+                        <Button
+                            Grid.Column="2"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.Name="Start a 10 minute timer"
+                            Click="PresetTimer_Click"
+                            Content="10 min"
+                            Tag="600"
+                            ToolTipService.ToolTip="Start a 10 minute timer" />
+                        <Button
+                            Grid.Column="3"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.Name="Start a 25 minute timer"
+                            Click="PresetTimer_Click"
+                            Content="25 min"
+                            Tag="1500"
+                            ToolTipService.ToolTip="Start a 25 minute timer" />
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Spacing="8">
+                    <TextBlock Style="{StaticResource SectionLabelTextBlockStyle}" Text="Custom" />
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <NumberBox
+                            x:Name="HoursBox"
+                            AutomationProperties.Name="Hours"
+                            KeyUp="DurationBox_KeyUp"
+                            LargeChange="5"
+                            Maximum="99"
+                            Minimum="0"
+                            PlaceholderText="hh"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Compact"
+                            ToolTipService.ToolTip="Hours"
+                            ValueChanged="DurationBox_ValueChanged" />
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AccessibilityView="Raw"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text=":" />
+                        <NumberBox
+                            x:Name="MinutesBox"
+                            Grid.Column="2"
+                            AutomationProperties.Name="Minutes"
+                            KeyUp="DurationBox_KeyUp"
+                            LargeChange="5"
+                            Maximum="999"
+                            Minimum="0"
+                            PlaceholderText="mm"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Compact"
+                            ToolTipService.ToolTip="Minutes"
+                            ValueChanged="DurationBox_ValueChanged" />
+                        <TextBlock
+                            Grid.Column="3"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AccessibilityView="Raw"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text=":" />
+                        <NumberBox
+                            x:Name="SecondsBox"
+                            Grid.Column="4"
+                            AutomationProperties.Name="Seconds"
+                            KeyUp="DurationBox_KeyUp"
+                            LargeChange="5"
+                            Maximum="999"
+                            Minimum="0"
+                            PlaceholderText="ss"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Compact"
+                            ToolTipService.ToolTip="Seconds"
+                            ValueChanged="DurationBox_ValueChanged" />
+                        <Button
+                            x:Name="CustomStartButton"
+                            Grid.Column="5"
+                            Margin="4,0,0,0"
+                            AutomationProperties.AutomationId="StartCustomTimerButton"
+                            AutomationProperties.Name="Start custom timer"
+                            Click="CustomTimer_Click"
+                            Content="Start"
+                            IsEnabled="False"
+                            Style="{StaticResource AccentButtonStyle}"
+                            ToolTipService.ToolTip="Set a time first, then start" />
+                    </Grid>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="2">
+                    <!--  An ItemsControl, not a virtualizing list: cards leave the tree when removed, which stops their animations.  -->
+                    <ItemsControl x:Name="TimerList" AutomationProperties.Name="Timers">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:TimerRow">
+                                <Grid Style="{StaticResource CardStyle}" Padding="0">
+                                    <!--  Glow that breathes while the timer is going off.  -->
+                                    <Border
+                                        local:Motion.Pulse="{x:Bind IsRinging, Mode=OneWay}"
+                                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                        Opacity="0.25"
+                                        Visibility="{x:Bind RingingVisibility, Mode=OneWay}" />
+                                    <Grid Padding="12" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <Grid
+                                            Width="48"
+                                            Height="48"
+                                            VerticalAlignment="Center"
+                                            local:Motion.Throb="{x:Bind IsRinging, Mode=OneWay}">
+                                            <ProgressRing
+                                                Width="48"
+                                                Height="48"
+                                                AutomationProperties.AccessibilityView="Raw"
+                                                Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                                IsIndeterminate="False"
+                                                Maximum="100"
+                                                Opacity="{x:Bind RingOpacity, Mode=OneWay}"
+                                                Value="{x:Bind Progress, Mode=OneWay}" />
+                                            <FontIcon
+                                                local:Motion.Wiggle="{x:Bind IsRinging, Mode=OneWay}"
+                                                AutomationProperties.AccessibilityView="Raw"
+                                                FontSize="18"
+                                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                Glyph="&#xEA8F;"
+                                                Visibility="{x:Bind RingingVisibility, Mode=OneWay}" />
+                                            <FontIcon
+                                                AutomationProperties.AccessibilityView="Raw"
+                                                FontSize="14"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Glyph="{x:Bind CenterGlyph, Mode=OneWay}" />
+                                        </Grid>
+
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            AutomationProperties.Name="{x:Bind Description, Mode=OneWay}">
+                                            <TextBlock
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Text="{x:Bind Label}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                FontSize="28"
+                                                Opacity="{x:Bind RingOpacity, Mode=OneWay}"
+                                                Style="{StaticResource DigitsTextBlockStyle}"
+                                                Text="{x:Bind Remaining, Mode=OneWay}" />
+                                            <TextBlock
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Text="{x:Bind Status, Mode=OneWay}" />
+                                        </StackPanel>
+
+                                        <Button
+                                            Grid.Column="2"
+                                            AutomationProperties.Name="{x:Bind ToggleName, Mode=OneWay}"
+                                            Click="ToggleTimer_Click"
+                                            Style="{StaticResource FlyoutIconButtonStyle}"
+                                            Tag="{x:Bind Id}"
+                                            ToolTipService.ToolTip="{x:Bind ToggleName, Mode=OneWay}"
+                                            Visibility="{x:Bind ControlsVisibility, Mode=OneWay}">
+                                            <FontIcon FontSize="14" Glyph="{x:Bind ToggleGlyph, Mode=OneWay}" />
+                                        </Button>
+                                        <Button
+                                            Grid.Column="3"
+                                            AutomationProperties.Name="Delete timer"
+                                            Click="RemoveTimer_Click"
+                                            Style="{StaticResource FlyoutIconButtonStyle}"
+                                            Tag="{x:Bind Id}"
+                                            ToolTipService.ToolTip="Delete timer"
+                                            Visibility="{x:Bind ControlsVisibility, Mode=OneWay}">
+                                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                                        </Button>
+
+                                        <!--  Going off: big, obvious ways to stop it.  -->
+                                        <Grid
+                                            Grid.Row="1"
+                                            Grid.ColumnSpan="4"
+                                            Margin="0,12,0,0"
+                                            ColumnSpacing="8"
+                                            Visibility="{x:Bind RingingVisibility, Mode=OneWay}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button
+                                                HorizontalAlignment="Stretch"
+                                                AutomationProperties.Name="Restart timer"
+                                                Click="ToggleTimer_Click"
+                                                Tag="{x:Bind Id}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                                                    <TextBlock Text="Restart" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button
+                                                Grid.Column="1"
+                                                HorizontalAlignment="Stretch"
+                                                AutomationProperties.Name="Dismiss timer"
+                                                Click="DismissTimer_Click"
+                                                Style="{StaticResource AccentButtonStyle}"
+                                                Tag="{x:Bind Id}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <FontIcon FontSize="14" Glyph="&#xE73E;" />
+                                                    <TextBlock Text="Dismiss" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <TextBlock
+                    x:Name="TimersEmptyText"
+                    Grid.Row="2"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Pick a quick start or set a custom time."
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </Grid>
+        </Grid>
     </Grid>
 </Page>

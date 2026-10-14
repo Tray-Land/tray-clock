@@ -6,9 +6,9 @@ Tray Clock is a WinUI 3 app that lives in the Windows notification area. It has 
 
 ## Features
 
-- **Clocks:** your local time plus any cities you add, with day and offset from local. Reorder or remove cities from the row's context menu, or swipe to delete. The time-shift button lets you pick a local time and see it in every city.
-- **Stopwatch:** start, pause, lap, and reset. It keeps running while the flyout is closed.
-- **Timers:** presets or a custom duration, several at once. A finished timer beeps and opens the flyout.
+- **Clocks:** your local time plus any cities you add (search by name), with day, offset from local, and a sun or moon for daytime. Drag the compare slider up to 12 hours either way to see that moment in every city. Reorder or remove cities from the row's "…" button or context menu, by dragging, or by swiping to delete.
+- **Stopwatch:** start, pause, lap, and reset, with each lap's split and the fastest and slowest laps marked. "Copy laps as a table" in the "…" menu puts them on the clipboard ready to paste into Excel or another spreadsheet. It keeps running while the flyout is closed.
+- **Timers:** presets or a custom duration, several at once, each showing when it will end. A finished timer beeps, opens the flyout, and keeps going off (a pulsing card and a swinging bell) until you dismiss or restart it. Dismissing sets it back to its full time, ready to start again.
 - **Tray menu:** right-click for Open, Start/Pause stopwatch, Repeat timer, Settings, and Exit.
 - **Settings:** Start with Windows, shown inside the flyout.
 - **Theme-aware:** the tray icon and flyout follow the Windows taskbar theme.

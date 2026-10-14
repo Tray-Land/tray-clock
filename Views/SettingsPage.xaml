@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Transparent">
 
-    <Grid Padding="16,12,12,12" RowSpacing="12">
+    <Grid Padding="16,12,16,16" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -13,7 +13,11 @@
         </Grid.RowDefinitions>
 
         <!--  Header  -->
-        <StackPanel Orientation="Horizontal" Spacing="8">
+        <!--  The back button hangs into the padding so its glyph lines up with the content edge.  -->
+        <StackPanel
+            Margin="-8,0,0,0"
+            Orientation="Horizontal"
+            Spacing="4">
             <Button
                 x:Name="BackButton"
                 AutomationProperties.Name="Back"
@@ -29,19 +33,13 @@
         </StackPanel>
 
         <ScrollViewer Grid.Row="1">
-            <StackPanel Padding="0,0,4,0" Spacing="4">
-                <TextBlock
-                    Margin="0,0,0,8"
-                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                    Text="General" />
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource SectionLabelTextBlockStyle}" Text="General" />
 
                 <Grid
                     Padding="16,12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
                     ColumnSpacing="12"
-                    CornerRadius="4">
+                    Style="{StaticResource CardStyle}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />

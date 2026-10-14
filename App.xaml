@@ -42,6 +42,48 @@
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderThickness" Value="0" />
             </Style>
+
+            <!--
+                Spacing scale used across the flyout: 16 between sections and at the page edge,
+                12 inside cards, 8 between related controls, 4 between stacked text.
+            -->
+            <Style x:Key="CardStyle" TargetType="Grid">
+                <Setter Property="Padding" Value="12" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+            </Style>
+
+            <!--  Small secondary label that names a section ("Quick start", "Laps").  -->
+            <Style
+                x:Key="SectionLabelTextBlockStyle"
+                BasedOn="{StaticResource CaptionTextBlockStyle}"
+                TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <!--  Large clock digits; Segoe UI Variable's figures are tabular, so ticking digits don't jitter.  -->
+            <Style
+                x:Key="DigitsTextBlockStyle"
+                BasedOn="{StaticResource BodyTextBlockStyle}"
+                TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Segoe UI Variable Display" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="TextWrapping" Value="NoWrap" />
+            </Style>
+
+            <!--  List rows drawn as cards: the card supplies padding, the row only spaces them.  -->
+            <Style
+                x:Key="CardListViewItemStyle"
+                BasedOn="{StaticResource DefaultListViewItemStyle}"
+                TargetType="ListViewItem">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0,0,0,6" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
