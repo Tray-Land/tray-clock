@@ -3,7 +3,7 @@ using Microsoft.UI.Dispatching;
 namespace TrayClock.Services;
 
 /// <summary>A countdown timer. Uses the monotonic tick counter so clock changes don't affect it.</summary>
-internal sealed class TimerItem(int id, string label, TimeSpan duration)
+internal sealed class TimerItem(int id, string label, TimeSpan duration, bool saved)
 {
     private long _endTick;
     private TimeSpan _left = duration;
@@ -11,6 +11,9 @@ internal sealed class TimerItem(int id, string label, TimeSpan duration)
     public int Id { get; } = id;
     public string Label { get; } = label;
     public TimeSpan Duration { get; } = duration;
+
+    /// <summary>Named or custom: kept (and remembered across restarts) after it finishes and is dismissed. Quick-start timers are not.</summary>
+    public bool Saved { get; } = saved;
     public bool Running { get; private set; }
 
     /// <summary>Finished and going off until the user dismisses or restarts it.</summary>
@@ -138,12 +141,29 @@ internal static class ClockState
     // Timers
     public static IReadOnlyList<TimerItem> Timers => TimerList;
 
-    public static TimerItem AddTimer(TimeSpan duration, string? label = null)
+    /// <summary>Adds the timers remembered from last time, stopped at their full duration. Call once at startup.</summary>
+    public static void LoadSaved()
     {
-        TimerItem item = new(_nextId++, string.IsNullOrWhiteSpace(label) ? DefaultLabel(duration) : label.Trim(), duration);
+        foreach (SavedTimer saved in SettingsService.SavedTimerList)
+        {
+            TimerList.Add(new TimerItem(_nextId++, saved.Name, saved.Duration, saved: true));
+        }
+    }
+
+    /// <summary>Adds a timer and starts it. A custom time or a name makes it a saved timer that outlives its first run.</summary>
+    public static TimerItem AddTimer(TimeSpan duration, string? label = null, bool saved = false)
+    {
+        string name = SavedTimers.CleanName(label);
+        saved |= name.Length > 0;
+        TimerItem item = new(_nextId++, name.Length > 0 ? name : DefaultLabel(duration), duration, saved);
         TimerList.Add(item);
         LastDuration = duration;
         item.Start();
+        if (saved)
+        {
+            PersistSaved();
+        }
+
         Reschedule();
         return item;
     }
@@ -171,7 +191,7 @@ internal static class ClockState
         Reschedule();
     }
 
-    /// <summary>Silences a finished timer and sets it back to its full duration, ready to start again.</summary>
+    /// <summary>Silences a finished timer. A saved one goes back to its full duration, ready to start again; a quick-start one is removed.</summary>
     public static void DismissTimer(int id)
     {
         if (TimerList.FirstOrDefault(t => t.Id == id) is not { } item)
@@ -179,15 +199,34 @@ internal static class ClockState
             return;
         }
 
-        item.Reset();
+        if (item.Saved)
+        {
+            item.Reset();
+        }
+        else
+        {
+            TimerList.Remove(item);
+        }
+
         Reschedule();
     }
 
     public static void RemoveTimer(int id)
     {
-        TimerList.RemoveAll(t => t.Id == id);
+        if (TimerList.FirstOrDefault(t => t.Id == id) is { } item)
+        {
+            TimerList.Remove(item);
+            if (item.Saved)
+            {
+                PersistSaved();
+            }
+        }
+
         Reschedule();
     }
+
+    private static void PersistSaved() =>
+        SettingsService.SavedTimerList = [.. TimerList.Where(t => t.Saved).Select(t => new SavedTimer(t.Label, t.Duration))];
 
     private static string DefaultLabel(TimeSpan d) =>
         d.TotalHours >= 1 && d.Minutes == 0 && d.Seconds == 0 ? $"{(int)d.TotalHours} hour timer"

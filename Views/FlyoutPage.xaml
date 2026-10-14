@@ -548,6 +548,14 @@
 
                 <StackPanel Grid.Row="1" Spacing="8">
                     <TextBlock Style="{StaticResource SectionLabelTextBlockStyle}" Text="Custom" />
+                    <TextBox
+                        x:Name="TimerNameBox"
+                        AutomationProperties.AutomationId="TimerNameBox"
+                        AutomationProperties.Name="Timer name"
+                        KeyUp="DurationBox_KeyUp"
+                        MaxLength="40"
+                        PlaceholderText="Name (optional), kept after it goes off"
+                        ToolTipService.ToolTip="Name the timer so you can tell it apart" />
                     <Grid ColumnSpacing="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -683,8 +691,7 @@
                                             VerticalAlignment="Center"
                                             AutomationProperties.Name="{x:Bind Description, Mode=OneWay}">
                                             <TextBlock
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Style="{StaticResource BodyStrongTextBlockStyle}"
                                                 Text="{x:Bind Label}"
                                                 TextTrimming="CharacterEllipsis" />
                                             <TextBlock

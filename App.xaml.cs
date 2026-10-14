@@ -76,6 +76,7 @@ public partial class App : Application
             (_, _) => _dispatcher.TryEnqueue(ShowFlyout), null, Timeout.Infinite, executeOnlyOnce: false);
 
         InitializeTrayIcon();
+        ClockState.LoadSaved();
 
         // A timer finishing while the flyout is hidden is the reason this app does background work.
         ClockState.TimerFinished += _ =>

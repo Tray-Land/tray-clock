@@ -31,6 +31,13 @@ internal static class SettingsService
         set => Set(nameof(Cities), string.Join('|', value));
     }
 
+    /// <summary>Named and custom timers, encoded by <see cref="SavedTimers"/>.</summary>
+    public static IReadOnlyList<SavedTimer> SavedTimerList
+    {
+        get => SavedTimers.Decode(Get<string?>(nameof(SavedTimerList), null));
+        set => Set(nameof(SavedTimerList), SavedTimers.Encode(value));
+    }
+
     public static T? GetJson<T>(string key, JsonTypeInfo<T> typeInfo)
     {
         if (Get<string?>(key, null) is not { } json)

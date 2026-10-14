@@ -525,7 +525,8 @@ public sealed partial class FlyoutPage : Page, IDisposable
             return;
         }
 
-        ClockState.AddTimer(duration);
+        ClockState.AddTimer(duration, TimerNameBox.Text, saved: true);
+        TimerNameBox.Text = "";
         HoursBox.Value = MinutesBox.Value = SecondsBox.Value = double.NaN;
         AfterTimersChanged();
     }

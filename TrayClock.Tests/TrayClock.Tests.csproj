@@ -19,6 +19,7 @@
     <Compile Include="..\Services\ClockFormat.cs" Link="Services\ClockFormat.cs" />
     <Compile Include="..\Services\IcoEncoder.cs" Link="Services\IcoEncoder.cs" />
     <Compile Include="..\Services\LapStats.cs" Link="Services\LapStats.cs" />
+    <Compile Include="..\Services\SavedTimers.cs" Link="Services\SavedTimers.cs" />
     <Compile Include="..\Services\StopwatchIcon.cs" Link="Services\StopwatchIcon.cs" />
     <Compile Include="..\Services\TimerIcon.cs" Link="Services\TimerIcon.cs" />
   </ItemGroup>
