@@ -137,11 +137,7 @@ public partial class App : Application
     private void InitializeTrayIcon()
     {
         _trayIcon = new TrayIcon(1, TrayIconPath, DisplayName);
-        _trayIcon.Selected += (_, _) =>
-        {
-            SetTrayStatus(null);
-            EnsureFlyout().Toggle();
-        };
+        _trayIcon.Selected += (sender, _) => OnTrayIconSelected(sender);
         _trayIcon.ContextMenu += TrayIcon_ContextMenu;
         _trayIcon.IsVisible = true;
         WindowPlacementService.SetTrayIcon(_trayIcon);
@@ -167,14 +163,19 @@ public partial class App : Application
     private TrayIcon CreateExtraTrayIcon(uint id)
     {
         TrayIcon icon = new(id, TrayIconPath, DisplayName);
-        icon.Selected += (_, _) =>
-        {
-            SetTrayStatus(null);
-            EnsureFlyout().Toggle();
-        };
+        icon.Selected += (sender, _) => OnTrayIconSelected(sender);
         icon.ContextMenu += TrayIcon_ContextMenu;
         icon.IsVisible = true;
         return icon;
+    }
+
+    // The icon you click decides the page: a timer icon opens Timers, the stopwatch icon opens Stopwatch.
+    private ClockTab TabFor(TrayIcon icon) => _activityIcon?.TabFor(icon) ?? ClockState.IdleTab;
+
+    private void OnTrayIconSelected(TrayIcon icon)
+    {
+        SetTrayStatus(null);
+        EnsureFlyout().Toggle(TabFor(icon));
     }
 
     // A white glyph disappears on a light taskbar, which follows the Windows theme, not the app theme.
@@ -185,14 +186,18 @@ public partial class App : Application
     {
         MenuFlyout menu = new();
         MenuFlyoutItem open = new() { Text = $"Open {DisplayName}", Icon = new FontIcon { Glyph = "" } };
-        open.Click += (_, _) => ShowFlyout();
+        open.Click += (_, _) =>
+        {
+            ClockState.PendingTab = TabFor(sender);
+            ShowFlyout();
+        };
         string stopwatchText = ClockState.StopwatchRunning ? "Pause stopwatch"
             : ClockState.StopwatchElapsed > TimeSpan.Zero ? "Resume stopwatch" : "Start stopwatch";
         MenuFlyoutItem stopwatch = new() { Text = stopwatchText, Icon = new FontIcon { Glyph = "" } };
         stopwatch.Click += (_, _) =>
         {
             ClockState.StopwatchToggle();
-            ClockState.PendingTab = 1;
+            ClockState.PendingTab = ClockTab.Stopwatch;
             ShowFlyout();
         };
         TimeSpan? last = ClockState.LastDuration;
@@ -207,7 +212,7 @@ public partial class App : Application
             if (ClockState.LastDuration is { } duration)
             {
                 ClockState.AddTimer(duration);
-                ClockState.PendingTab = 2;
+                ClockState.PendingTab = ClockTab.Timers;
                 ShowFlyout();
             }
         };

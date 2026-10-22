@@ -35,6 +35,9 @@ internal sealed class ActivityTrayIcon(
     {
         public TrayIcon Icon { get; } = icon;
         public bool IsPrimary { get; } = isPrimary;
+
+        /// <summary>The tab for what this icon is showing, so a click opens the matching page.</summary>
+        public ClockTab Tab { get; set; }
         public HICON Handle;
     }
 
@@ -87,6 +90,7 @@ internal sealed class ActivityTrayIcon(
         for (int i = 0; i < timers.Count; i++)
         {
             TimerItem timer = timers[i];
+            _slots[i].Tab = ClockTab.Timers;
             Show(_slots[i], TimerIcon.Create(IconSize, TimerIcon.Fraction(timer.Remaining, timer.Duration), Color), timer.Label);
             soonest = Min(soonest, TimerIcon.UntilNextSegment(timer.Remaining, timer.Duration));
         }
@@ -94,6 +98,7 @@ internal sealed class ActivityTrayIcon(
         if (ClockState.StopwatchRunning)
         {
             double degrees = StopwatchIcon.HandDegrees(ClockState.StopwatchElapsed, StopwatchStepSeconds);
+            _slots[count - 1].Tab = ClockTab.Stopwatch;
             Show(_slots[count - 1], StopwatchIcon.Create(IconSize, degrees, Color), "Stopwatch");
             double intoStep = ClockState.StopwatchElapsed.TotalSeconds % StopwatchStepSeconds;
             soonest = Min(soonest, TimeSpan.FromSeconds(StopwatchStepSeconds - intoStep));
@@ -101,6 +106,16 @@ internal sealed class ActivityTrayIcon(
 
         _active = true;
         Schedule(soonest);
+    }
+
+    /// <summary>
+    /// The tab a click on <paramref name="icon"/> should open: the timers for a timer icon, the stopwatch
+    /// for the stopwatch icon, and the best page for whatever is left when the app icon is showing.
+    /// </summary>
+    public ClockTab TabFor(TrayIcon icon)
+    {
+        Slot? slot = _active ? _slots.Find(s => s.Icon == icon) : null;
+        return slot?.Tab ?? ClockState.IdleTab;
     }
 
     public void Dispose()

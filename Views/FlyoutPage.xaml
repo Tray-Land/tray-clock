@@ -55,6 +55,7 @@
             Grid.Row="1"
             Margin="-4,0,0,0"
             AutomationProperties.Name="Tabs"
+            Loaded="Tabs_Loaded"
             SelectionChanged="Tabs_SelectionChanged">
             <SelectorBarItem
                 AutomationProperties.AutomationId="ClocksTab"

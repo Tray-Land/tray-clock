@@ -98,8 +98,14 @@ internal static class ClockState
     /// <summary>Every running timer in creation order, so each keeps its own tray icon slot.</summary>
     public static IReadOnlyList<TimerItem> RunningTimers => TimerList.Where(t => t.Running).OrderBy(t => t.Id).ToList();
 
-    /// <summary>Tab the flyout should open on next (0 clocks, 1 stopwatch, 2 timers); the flyout consumes it.</summary>
-    public static int? PendingTab { get; set; }
+    /// <summary>Tab the flyout should open on next; the flyout consumes it.</summary>
+    public static ClockTab? PendingTab { get; set; }
+
+    /// <summary>The tab worth opening when nothing is running: a finished timer, a stopwatch holding a time, a paused timer, else the clocks.</summary>
+    public static ClockTab IdleTab => TabPolicy.ForIdle(
+        timerFinished: TimerList.Any(t => t.Done),
+        stopwatchHasTime: Watch.Elapsed > TimeSpan.Zero,
+        timerPaused: TimerList.Any(t => !t.Running && !t.Done && !t.Ready));
 
     /// <summary>Duration of the most recently started timer, for "Repeat timer".</summary>
     public static TimeSpan? LastDuration { get; private set; }
@@ -264,7 +270,7 @@ internal static class ClockState
         {
             if (item.CompleteIfElapsed())
             {
-                PendingTab = 2;
+                PendingTab = ClockTab.Timers;
                 TimerFinished?.Invoke(item);
             }
         }

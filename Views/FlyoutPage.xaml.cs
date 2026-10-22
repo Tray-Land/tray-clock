@@ -143,6 +143,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
     private readonly DispatcherQueueTimer _tick;
     private readonly DispatcherQueueTimer _copiedTimer;
     private int _tab;
+    private ClockTab? _tabAfterLoad;
     private TimeSpan _shift;
 
     public FlyoutPage()
@@ -174,6 +175,8 @@ public sealed partial class FlyoutPage : Page, IDisposable
         RebuildLaps();
     }
 
+    internal ClockTab CurrentTab => (ClockTab)_tab;
+
     internal static string DayGlyphFor(DateTimeOffset local) => ClockFormat.IsDaytime(local) ? SunGlyph : MoonGlyph;
 
     /// <summary>The flyout opened: start drawing live time.</summary>
@@ -184,7 +187,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
         if (ClockState.PendingTab is { } tab)
         {
             ClockState.PendingTab = null;
-            Tabs.SelectedItem = Tabs.Items[tab];
+            SelectTab(tab);
         }
 
         SyncTimers();
@@ -203,6 +206,29 @@ public sealed partial class FlyoutPage : Page, IDisposable
     }
 
     public void Dispose() => OnHidden();
+
+    // A brand-new page isn't loaded yet when it is first shown, and the SelectorBar then re-applies the
+    // tab the XAML marks selected while it loads, undoing the choice. So the choice waits for Loaded.
+    private void SelectTab(ClockTab tab)
+    {
+        if (Tabs.IsLoaded)
+        {
+            Tabs.SelectedItem = Tabs.Items[(int)tab];
+        }
+        else
+        {
+            _tabAfterLoad = tab;
+        }
+    }
+
+    private void Tabs_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_tabAfterLoad is { } tab)
+        {
+            _tabAfterLoad = null;
+            Tabs.SelectedItem = Tabs.Items[(int)tab];
+        }
+    }
 
     private void Tick()
     {

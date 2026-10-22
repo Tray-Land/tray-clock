@@ -110,11 +110,22 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         _animationTimer.Tick += AnimationTimer_Tick;
     }
 
-    /// <summary>Shows the popup, or hides it if already visible (tray-icon click behavior).</summary>
-    public void Toggle()
+    /// <summary>
+    /// Shows the popup on <paramref name="tab"/>, or hides it if already visible (tray-icon click
+    /// behavior). A pinned popup stays up, so a click on an icon for another page moves it there
+    /// instead of closing it.
+    /// </summary>
+    internal void Toggle(ClockTab? tab = null)
     {
         if (_isPopupVisible)
         {
+            if (App.Current.IsFlyoutPinned && tab is { } wanted && (IsShowingSettings || wanted != _page.CurrentTab))
+            {
+                ClockState.PendingTab = wanted;
+                ShowMainPage();
+                return;
+            }
+
             HidePopup();
             return;
         }
@@ -125,6 +136,7 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         }
 
         // A tray click always lands on the content, not on settings.
+        ClockState.PendingTab = tab;
         ShowMainPage();
         ShowPopup();
     }
