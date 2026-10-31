@@ -29,6 +29,11 @@
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <Content Include="Assets\AppIcon-dark.ico" />
     <Content Remove="branding\**" />
+    <!-- Release builds (build-msix-for-gh.ps1) package the App Installer feed so the app keeps updating itself. -->
+    <Content Include="$(ReleaseAppInstallerPath)" Condition="'$(ReleaseAppInstallerPath)' != ''">
+      <Link>Update.appinstaller</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Remove="TrayClock.Tests\**" />
     <Content Remove="TrayClock.Tests\**" />
     <None Remove="TrayClock.Tests\**" />
