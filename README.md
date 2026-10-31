@@ -16,7 +16,7 @@ Tray Clock is a WinUI 3 app that lives in the Windows notification area. It has 
 
 ## Install
 
-Requires Windows 10 1809 or later, x64 or ARM64. Download the MSIX from the GitHub releases page (sideloading needs the signing certificate installed first).
+Requires Windows 10 1809 or later, x64 or ARM64. Download [TrayClock.appinstaller](https://github.com/Tray-Land/tray-clock/releases/latest/download/TrayClock.appinstaller) and open it. Windows installs the right version for your PC and keeps it updated.
 
 ## Privacy and footprint
 
@@ -29,8 +29,10 @@ Prerequisites: .NET 10 SDK, Developer Mode, and `winget install Microsoft.WinApp
 ```powershell
 winapp run          # or: dotnet run
 dotnet test TrayClock.Tests
-.\build-msix-for-gh.ps1   # signed x64 + ARM64 MSIX and a draft GitHub release
+.\build-msix-for-gh.ps1   # signed x64 + ARM64 .msixbundle, auto-updating .appinstaller feed, draft GitHub release
 ```
+
+To release: bump `Identity/@Version`, run `.\build-msix-for-gh.ps1`, publish the draft without changing its tag, then run `.\build-msix-for-gh.ps1 -VerifyPublished`.
 
 ## License
 
