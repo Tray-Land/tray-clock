@@ -16,6 +16,8 @@ Tray Clock is a WinUI 3 app that lives in the Windows notification area. It has 
 
 ## Install
 
+[<img src="docs/MSIX.svg" alt="Install TrayClock (MSIX)" width="212">](https://github.com/Tray-Land/tray-clock/releases/latest/download/TrayClock.appinstaller)
+
 Requires Windows 10 1809 or later, x64 or ARM64. Download [TrayClock.appinstaller](https://github.com/Tray-Land/tray-clock/releases/latest/download/TrayClock.appinstaller) and open it. Windows installs the right version for your PC and keeps it updated.
 
 ## Privacy and footprint
